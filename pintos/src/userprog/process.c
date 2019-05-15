@@ -37,9 +37,12 @@ process_execute (const char *file_name)
   if (fn_copy == NULL)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
+  
+  char *cmd_name, *args;
+  cmd_name = strtok_r(fn_copy, " ", &args);  
 
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+  tid = thread_create (cmd_name, PRI_DEFAULT, start_process, args);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy); 
   return tid;
@@ -195,7 +198,7 @@ struct Elf32_Phdr
 #define PF_W 2          /* Writable. */
 #define PF_R 4          /* Readable. */
 
-static bool setup_stack (void **esp);
+static bool setup_stack (void **esp, const char *file_name);
 static bool validate_segment (const struct Elf32_Phdr *, struct file *);
 static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
                           uint32_t read_bytes, uint32_t zero_bytes,
@@ -222,12 +225,15 @@ load (const char *file_name, void (**eip) (void), void **esp)
   process_activate ();
 
   /* Open executable file. */
-  file = filesys_open (file_name);
+  file = filesys_open (t->name);
   if (file == NULL) 
     {
-      printf ("load: %s: open failed\n", file_name);
+      printf ("load: %s: open failed\n", t->name);
       goto done; 
     }
+
+  t->exec_file = file;
+  file_deny_write(file);
 
   /* Read and verify executable header. */
   if (file_read (file, &ehdr, sizeof ehdr) != sizeof ehdr
@@ -238,7 +244,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
       || ehdr.e_phentsize != sizeof (struct Elf32_Phdr)
       || ehdr.e_phnum > 1024) 
     {
-      printf ("load: %s: error loading executable\n", file_name);
+      printf ("load: %s: error loading executable\n", t->name);
       goto done; 
     }
 
@@ -302,7 +308,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
     }
 
   /* Set up stack. */
-  if (!setup_stack (esp))
+  if (!setup_stack (esp, file_name));
     goto done;
 
   /* Start address. */
@@ -427,7 +433,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 /* Create a minimal stack by mapping a zeroed page at the top of
    user virtual memory. */
 static bool
-setup_stack (void **esp) 
+setup_stack (void **esp, const char *file_name) 
 {
   uint8_t *kpage;
   bool success = false;
@@ -436,8 +442,59 @@ setup_stack (void **esp)
   if (kpage != NULL) 
     {
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
-      if (success)
+      if (success){
         *esp = PHYS_BASE;
+        uint8_t *argstr_head;
+        char *cmd_name = thread_current()->name;
+        int strlength, total_length;
+        int argc;
+        /* push arguments into stack */
+        strlength = strlen(file_name) + 1; // why +1?
+        *esp -= strlength;
+        memcpy(*esp, file_name, strlength);
+        total_length += strlength;
+        /* push cmd_name into stack */
+        strlength = strlen(cmd_name) + 1; // same question
+        *esp -= strlength;
+        argstr_head = *esp;
+        memcpy(*esp, cmd_name, strlength);
+        total_length += strlength;
+        /* set alignement of next address of *esp */
+        *esp -= 4 - total_length % 4;
+        /* push argv[argc] null into stack */
+        *esp -= 4;
+        *(uint32_t*) *esp = (uint32_t) NULL;
+        
+        int i = total_length - 1;
+        while(*(argstr_head + i) == ' ' || *(argstr_head + i) == '\0'){
+          i--;
+        }
+        /* put args address into stack */
+        char *mark;
+        for(mark = (char*)(argstr_head + i); i > 0; i--, mark = (char*)(argstr_head)){
+          if((*mark == '\0' || *mark == ' ') && (*(mark + 1) != '\0' && *(mark + 1) != ' ')){
+            *esp -= 4;
+            *(uint32_t*) *esp = (uint32_t) mark + 1;
+            argc++;
+          }
+          if(*mark == ' '){
+            *mark = '\0';
+          }
+        }
+        /* push one more arg into stack */
+        *esp -= 4;
+        *(uint32_t*) *esp = (uint32_t) argstr_head;
+        argc++;
+        /* push argv */
+        *(uint32_t*) (*esp - 4) = *(uint32_t*) esp;
+        *esp -= 4;
+        /* push argc */
+        *esp -= 4;
+        *(int*) *esp = argc;
+        /* push return address */
+        *esp -= 4;
+        *(uint32_t*) *esp = 0x0;
+      }
       else
         palloc_free_page (kpage);
     }

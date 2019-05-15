@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "fixed_point.h"
+#include "filesys/file.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -24,6 +25,15 @@ typedef int tid_t;
 #define PRI_MIN 0                       /* Lowest priority. */
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
+
+struct child_status
+{
+  tid_t child_id;
+  bool is_exit_called;
+  bool has_been_waited;
+  int child_exit_status;
+  struct list_elem elem_child_status;
+};
 
 /* A kernel thread or user process.
 
@@ -97,6 +107,17 @@ struct thread
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
+    struct file *exec_file;             
+    tid_t parent_id;                    /* parent thread id */
+    /* Indicate child's executable-loading status
+     *  0: has not been loaded
+     * -1: load failed
+     *  1: load success */
+    int child_load_status;
+    struct lock lock_child;
+    struct condition cond_child;
+    /* list of children, which should be a list of struct child_status */
+    struct list children;
 #endif
 
     /* Owned by thread.c. */

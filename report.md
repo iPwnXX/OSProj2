@@ -190,7 +190,10 @@ actually write or -1 for read fail */
    if it is STDOUT_FILENO, put buffer to console.  else, invoke *get_open_file() to find the file, and use   
    file_write() to write file into buffer.
 
-```
-
 ### Synchronization
+
+For each file operation, we append file_system_lock to make sure there is only one thread opearting the file system.   
+function such as open(), read() or write() all require acquiring the lock first in function body before   
+modify file struct.
+
 ### Rationale:

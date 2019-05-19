@@ -193,7 +193,7 @@ actually write or -1 for read fail */
 ### Synchronization
 
 For each file operation, we append file_system_lock to make sure there is only one thread opearting the file system.   
-function such as open(), read() or write() all require acquiring the lock first in function body before   
-modify file struct.
+function such as open(), read() or write() all require acquiring the lock first in function body before modify file struct.
 
 ### Rationale:
+in every of the new function, each time when we access the memory, we first check the validation the memory pointer, if it is a valid memory location, then we can excecute the following code, otherwise return -1 to thread.

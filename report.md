@@ -11,7 +11,7 @@ struct thread * get_thread_by_id (tid_t){}
 ```
 #### in thread.h  
 ```
-+ /*represent four state of child thread*/  
+ /*represent four state of child thread*/  
 struct child_state {  
     tid_t child_id;  
     bool called_exit;  
@@ -24,7 +24,7 @@ struct child_state {
 #### in process.c  
 ```
 /*file name split from argument*/  
-char cp_name  
+char cp_name;  
 
 /*state of current child*/  
 struct child_state s_child  
@@ -51,10 +51,10 @@ struct thread *t_cur;
 struct child_state* s_child;  
 
 /*list of element*/   
-struct list_elem *e  
+struct list_elem *e;  
 
 /*current status*/  
-int cur_state   
+int cur_state;   
 ```
 ##### in process_exit()  
 ```
@@ -80,7 +80,7 @@ this approach of setting up stack can handle overflowing of stack page. During s
 ## TASK2 PROCESS CONTROL SYSCALLS
 
 ### Data structure and functions:
-In thread.h
+##### In thread.h
 ```
 /* The status of child thread. */
 struct child_status {
@@ -91,7 +91,7 @@ struct child_status {
   struct list_elem elem_child_status;   
 };
 ```
-In thread struct
+##### In thread struct
 ```
 #ifdef USERPROG
      tid_t parent_id;                    /* parent thread id */
@@ -141,4 +141,27 @@ Call `process_wait()` in process.c
 
 We used lock to ensure that only the running thread can get into the criticle section for thread safe in syscall functions.
 
+### Rationale:
+
+## task 3 FILE OPERATION SYSCALLS
+### Data structure and functions
+##### in syscall.c
+```
+struct file_descriptor
+{
+  int fd_num;
+  tid_t owner;
+  struct file *file_struct;
+  struct list_elem elem;
+};
+
+/* a list record the file that is opened by syscall in user process. */
+struct list list_open_file; 
+
+/* lock that ensure only one thread can enter file system at the same time */
+struct lock file_sys_lock;
+
+```
+### Algorithms
+### Synchronization
 ### Rationale:

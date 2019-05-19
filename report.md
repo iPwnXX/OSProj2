@@ -144,6 +144,12 @@ We used lock to ensure that only the running thread can get into the criticle se
 
 ### Rationale:
 
+In our design, the shortcoming is that each time when executing a syscall function, it will iterate all of the children list, which the time cost is O(n).  
+
+Coding part is mainly on userprog/syscall.c and userprgs/process.c and thread/thread.h. We encapulate most funtional parts in syscall.c and mainly hard parts are in process.c.
+
+In the future, our design is easy to extend, because we could add new structs in thread.h and process.c, and extend new features according to new structs.   
+
 ## task 3 FILE OPERATION SYSCALLS
 ### Data structure and functions
 ##### in syscall.c

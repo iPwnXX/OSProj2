@@ -62,7 +62,8 @@ int cur_state;
 struct list_elem *iter, *next;  
 ```
 ### algorithm
-the key alogirhtm in argument passing is to parse and seperate the command and parameters passing in by deliminating white space. and set up a stack in memory to save argument in right order. in process_execute() we split the string of command and argument, which is used for thread name and the input of start_process() & setup_stack(). the commond name can be obtained from thread->name. And then in setup_stack(), the argument is written in reverse order for each string into stack and append  \0 for each argument. \*esp is the stack pointer originally initialled with PHASE_BASE and moved top down. each time get the strlength and move \*esp - strlengh and use memcpy to save the splitted string pattern. the argc is number of argument in 4 bytes. each string token is pushed downward in the page during scan of *file_name* while decreasing the \*esp.   
++ `setup_stack()`   
+   + the key alogirhtm in argument passing is to parse and seperate the command and parameters passing in by deliminating white space. and set up a stack in memory to save argument in right order. in process_execute() we split the string of command and argument, which is used for thread name and the input of start_process() & setup_stack(). the commond name can be obtained from thread->name. And then in setup_stack(), the argument is written in reverse order for each string into stack and append  \0 for each argument. \*esp is the stack pointer originally initialled with PHASE_BASE and moved top down. each time get the strlength and move \*esp - strlengh and use memcpy to save the splitted string pattern. the argc is number of argument in 4 bytes. each string token is pushed downward in the page during scan of *file_name* while decreasing the \*esp.   
 
 ### synchronization
 
@@ -164,23 +165,30 @@ struct lock file_sys_lock;
 ```
 ### Algorithms
 #### in syscall.c
-```
-bool create()   
+
++ `bool create()`   
 /*the function create a new file with specific file size bytes and does not   
-open it and return true if successfull*/
+   + open it and return true if successfull*/
 first check if the file name is valid, then acquire the lock in case of synchronization error.   
 if all above is okay, invoke filesys_create() and return the status, then release the lock.
 
-bool remove()   
-all pocedures are the same with create() except invoking filesys_remove()
++ `bool remove()`      
+   + all pocedures are the same with create() except invoking filesys_remove()
 
-int read()
++ `int read()`   
 /*read the file with given size of bytes into buffer and return how many bytes has been    
-actually read or -1 for read fail */
+actually read or -1 for read fail */   
+   + First check the validation of the pointer: buffer and buffer + size, exit -1 if not okay.  
+then acquire the file system lock to become the lock holder. next check the status, if it is STDOUT_FILENO   
+get input from standard input. else, invoke *get_open_file() to find the file, and use file_read() to read file   
+and return the status.
 
-
-
-int write()
++ `int write()`   
+/*writes bytes of given size from buffer to the open file and return how many bytes has been    
+actually write or -1 for read fail */   
+   + check the buffer pointer is valid, then acquire the file system lock, after that judge the status.   
+   if it is STDOUT_FILENO, put buffer to console.  else, invoke *get_open_file() to find the file, and use   
+   file_write() to write file into buffer.
 
 ```
 

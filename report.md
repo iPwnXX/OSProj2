@@ -163,5 +163,26 @@ struct lock file_sys_lock;
 
 ```
 ### Algorithms
+#### in syscall.c
+```
+bool create()   
+/*the function create a new file with specific file size bytes and does not   
+open it and return true if successfull*/
+first check if the file name is valid, then acquire the lock in case of synchronization error.   
+if all above is okay, invoke filesys_create() and return the status, then release the lock.
+
+bool remove()   
+all pocedures are the same with create() except invoking filesys_remove()
+
+int read()
+/*read the file with given size of bytes into buffer and return how many bytes has been    
+actually read or -1 for read fail */
+
+
+
+int write()
+
+```
+
 ### Synchronization
 ### Rationale:

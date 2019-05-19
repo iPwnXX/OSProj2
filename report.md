@@ -70,4 +70,4 @@ lock_release(&parent->child_lock);
 acquire lock in case of concurrent invoking,and wake up the waiting parent thread. then release the lock.  
 
 ### rationale
-
+this approach of setting up stack can handle overflowing of stack page. During setup_stack(), we scan through the input *file_name* to add each argument, without counting the space of memory requaired. and after going through, the overflow can be handled by page fault exeption if the allocated address is invalid. it will return -1 in exit().  

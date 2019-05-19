@@ -203,3 +203,56 @@ function such as open(), read() or write() all require acquiring the lock first 
 
 ### Rationale:
 in every of the new function, each time when we access the memory, we first check the validation the memory pointer, if it is a valid memory location, then we can excecute the following code, otherwise return -1 to thread.
+
+## Q&A
+
++ A reflection on the project – what exactly did each member do? What went well, and
+what could be improved?   
+
+    11612210： task1 & task3 deal with argument passing in process.c and file system call in syscall.c    
+    with corresponding report part
+
+    11612023: task2 deal with process control system call in syscall.c with corresponding report part
+
+    the struct definition in .h is doing well. while the function definition style can be improved to be uniform.
+    
++ Does your code exhibit any major memory safety problems (especially regarding C strings), memory leaks, poor error handling, or race conditions?
+
+        in argument passing setup_stack() function, we dealed with overflow by marking the exit state    
+        (mentioned in task 1 algorithm). In file system call, each time invoking function such as   
+        read/write/open, we first check the validation of the given memory pointer to gurantee   
+        safe acccess.
+
++ Did you use consistent code style? Your code should blend in with the existing Pintos
+code. Check your use of indentation, your spacing, and your naming conventions.   
+
+       the naming of variables and functions are kept the same style as the orignal pintos,   
+       where token is split with '-', for example get_thread_by_id
+
++ Is your code simple and easy to understand?   
+
+      yes, we keep our added code similar to the original code to make it understandable, and   
+      the naming style clear and explicit.
+
++ If you have very complex sections of code in your solution, did you add enough com-
+ments to explain them?
+
+      yes, in processs.c setup_stack(), since the procedure is considered to be complex, we leaved    
+      enough comment besides to explain the stack process.
+
++  Did you leave commented-out code in your final submission?
+
+       no, we delete those dead code.
+       
++  Did you copy-paste code instead of creating reusable functions?
+       for those function that will be repeatly used, we extract them out and put it into new functions. such    
+       as get_thread_by_id
+       
++  Are your lines of source code excessively long? (more than 100 characters)
+     
+       most of the lines are kept within lengh less than 100 characters. longer code will start   
+       a new line.
+
++ Did you re-implement linked list algorithms instead of using the provided list manipulation
+     
+       we choose to use the given list and list elem stead of creating our own data container.
